@@ -14,10 +14,13 @@ def banyan_sigma_wrapper(name=None,ip=None,ra=None,dec=None,pmra=None,pmdec=None
 	if plx == '-9999' or eplx == '-9999':
 		plx = np.nan
 		eplx = np.nan
-	
+
 	#Launch the regular banyan_sigma
-	output = banyan_sigma(ra=float(ra),dec=float(dec),pmra=float(pmra),pmdec=float(pmdec),epmra=float(epmra),epmdec=float(epmdec),rv=float(rv),erv=float(erv),plx=float(plx),eplx=float(eplx))
-	
+	output = banyan_sigma(ra=np.float64(ra),dec=np.float64(dec),
+			      pmra=np.float64(pmra),pmdec=np.float64(pmdec),
+			      epmra=np.float64(epmra),epmdec=np.float64(epmdec),
+			      rv=np.float64(rv),erv=np.float64(erv),
+			      plx=np.float64(plx),eplx=np.float64(eplx))	
 	#Transform LN_P to 0-1 probabilities
 	output_all = output['ALL']
 	probs = output_all.iloc[0].values*1e2
@@ -25,7 +28,6 @@ def banyan_sigma_wrapper(name=None,ip=None,ra=None,dec=None,pmra=None,pmdec=None
 	probs = np.minimum(probs,max_prob)
 	probs_formatted = np.round(np.minimum(probs,max_prob),1)
 	output_all.loc[0] = probs_formatted
-	print(output_all)
 	
 	#Save output probabilities to CSV
 	outdir = '/home/ipm/banyan/banyansigma/answer/'

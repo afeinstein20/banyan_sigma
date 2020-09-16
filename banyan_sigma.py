@@ -23,9 +23,8 @@ tiny_number = 1e-318
 total_besancon_objects = 7152397.0
 
 #Initiate some global constants
-#1 AU/yr to km/s divided by 1000
-kappa = 0.004743717361
-#Not using "from astropy import units as u; kappa=u.au.to(u.km)/u.year.to(u.s)" because astropy defines one year as exactly 365.25 days instead of 365 days
+kappa = 0.004743717361 #1 AU/yr to km/s divided by 1000.
+#For some reason "from astropy import units as u; kappa=u.au.to(u.km)/u.year.to(u.s)" is far less precise
 
 #J2000.0 Equatorial position of the Galactic North (b=90 degrees) from Carrol and Ostlie
 ra_pol = 192.8595
@@ -44,7 +43,7 @@ sin_dec_pol = np.sin(np.radians(dec_pol))
 cos_dec_pol = np.cos(np.radians(dec_pol))
 
 #Main BANYAN_SIGMA routine
-def banyan_sigma(stars_data=None,column_names=None,hypotheses=None,ln_priors=None,ntargets_max=1e7,ra=None,dec=None,pmra=None,pmdec=None,epmra=None,epmdec=None,dist=None,edist=None,rv=None,erv=None,psira=None,psidec=None,epsira=None,epsidec=None,plx=None,eplx=None,constraint_dist_per_hyp=None,constraint_edist_per_hyp=None,unit_priors=False,lnp_only=False,no_xyz=False,use_rv=None,use_dist=None,use_plx=None,use_psi=None,custom_models=None):
+def banyan_sigma(stars_data=None,column_names=None,hypotheses=None,ln_priors=None,ntargets_max=1e7,ra=None,dec=None,pmra=None,pmdec=None,epmra=None,epmdec=None,dist=None,edist=None,rv=None,erv=None,psira=None,psidec=None,epsira=None,epsidec=None,plx=None,eplx=None,constraint_dist_per_hyp=None,constraint_edist_per_hyp=None,unit_priors=False,lnp_only=False,no_xyz=False,use_rv=None,use_dist=None,use_plx=None,use_psi=None):
 	
 	#Automatically detect Astropy Tables and transform them to pandas dataframes
 	if stars_data is not None:
@@ -198,22 +197,17 @@ def banyan_sigma(stars_data=None,column_names=None,hypotheses=None,ln_priors=Non
 	if 'EDIST' not in data_table.keys():
 		data_table['EDIST'] = np.nan
 	
-	if custom_models is not None:
-		parameters_str = custom_models
-	else:
-		#Data file containing the parameters of Bayesian hypotheses
-		parameters_file = os.path.dirname(__file__)+os.sep+'data'+os.sep+'banyan_sigma_parameters.fits'
-		
-		#Check if the file exists
-		if not os.path.isfile(parameters_file):
-			raise ValueError('The multivariate Gaussian parameters file could not be found ! Please make sure that you did not move "'+os.sep+'data'+os.sep+'banyan_sigma_parameters.fits" from the same path as the Python file banyan_sigma.py !')
-		
-		#Read the parameters of Bayesian hypotheses
-		parameters_str = Table.read(parameters_file,format='fits')
+	#Data file containing the parameters of Bayesian hypotheses
+	parameters_file = os.path.dirname(__file__)+os.sep+'data'+os.sep+'banyan_sigma_parameters.fits'
 	
+	#Check if the file exists
+	if not os.path.isfile(parameters_file):
+		raise ValueError('The multivariate Gaussian parameters file could not be found ! Please make sure that you did not move "'+os.sep+'data'+os.sep+'banyan_sigma_parameters.fits" from the same path as the Python file banyan_sigma.py !')
+	
+	#Read the parameters of Bayesian hypotheses
+	parameters_str = Table.read(parameters_file,format='fits')
 	#Remove white spaces in names
 	parameters_str['NAME'] = np.chararray.strip(np.array(parameters_str['NAME']))
-
 	#Index the table by hypothesis name
 	parameters_str.add_index('NAME')
 	npar = np.size(parameters_str)
@@ -225,8 +219,7 @@ def banyan_sigma(stars_data=None,column_names=None,hypotheses=None,ln_priors=Non
 		hypotheses = hypotheses[sorted(indexes)]
 	
 	#Make sure that hypotheses are all upper case
-	#Also make sure that all hypotheses are not in bytes format
-	hypotheses = np.array([hyp.upper().decode('UTF-8') for hyp in hypotheses.tolist()])
+	hypotheses = np.array([hyp.upper().decode("utf-8") for hyp in hypotheses.tolist()])
 	nhyp = hypotheses.size
 	
 	#If constraint_dist_per_hyp is set, check that all hypotheses are included
@@ -415,7 +408,6 @@ def banyan_sigma(stars_data=None,column_names=None,hypotheses=None,ln_priors=Non
 			
 			#Combine each column of the dataframe with a weighted average
 			output_str = pd.DataFrame()
-			#Had to add a .values here
 			for coli in output_str_multimodel.columns.get_level_values(0):
 				output_str[coli] = logsumexp(logweights_2d+output_str_multimodel[coli].values,axis=1)
 	
@@ -903,7 +895,8 @@ def equatorial_galactic(ra,dec):
 	if np.size(dec) != num_stars:
 		raise ValueError('The dimensions ra and dec do not agree. They must all be numpy arrays of the same length.')
 	
-	#Compute intermediate quantities
+	
+	#ra_pol,dec_pol,l_north,sin_dec_pol,cos_dec_pol
 	ra_m_ra_pol = ra - ra_pol
 	sin_ra = np.sin(np.radians(ra_m_ra_pol))
 	cos_ra = np.cos(np.radians(ra_m_ra_pol))
@@ -919,9 +912,8 @@ def equatorial_galactic(ra,dec):
 	x2 = (sin_dec - sin_dec_pol*gamma)/cos_dec_pol
 	gl = l_north - np.degrees(np.arctan2(x1,x2))
 	gl = (gl+360.)%(360.)
-	#gl = np.mod(gl,360.0) might be better
 	
-	#Return Galactic coordinates tuple
+	#Return galactic coordinates tuple
 	return (gl, gb)
 	
 def matrix_set_product_A_single(A,B):
